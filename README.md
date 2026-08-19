@@ -8,6 +8,7 @@
 - **マイ予約** — 自分の今後/過去の予約一覧とキャンセル
 - **簡易ログイン** — メールアドレス＋パスワード（暗号化Cookieセッション）
 - **二重予約の防止** — トランザクション内の重複チェックで同一時間帯の重複予約を排除
+- **Googleカレンダー連携（任意）** — 各ユーザーが自分のGoogleアカウントを連携すると、予約作成時に自動でGoogleカレンダーへ登録され、予約取消時に自動削除されます
 - **管理者機能**
   - 設備管理（追加・編集・無効化 ※過去の予約と統計は保全）
   - ユーザー管理（追加・削除・管理者権限の切替）
@@ -49,6 +50,37 @@ npm start                   # ポート3000で起動
 
 - リバースプロキシ（nginx 等）の背後でHTTPSで公開してください（`NODE_ENV=production` ではCookieに `Secure` 属性が付きます）
 - `DATABASE_PATH` でDBファイルの配置先を変更できます。バックアップは `data/` ディレクトリをコピーするだけです
+
+## Googleカレンダー連携の設定
+
+この機能は任意です。未設定でもアプリ本体は動作します（連携UIに「利用できません」と表示されるだけです）。
+
+1. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成（既存プロジェクトでも可）
+2. 「APIとサービス → ライブラリ」で **Google Calendar API** を有効化
+3. 「APIとサービス → OAuth同意画面」を設定
+   - Google Workspace利用組織なら User Type は「内部」が簡単です
+   - 「外部」の場合はテストユーザーに利用者のGmailアドレスを追加（または公開設定）
+   - スコープに `.../auth/calendar.events` と `openid` `email` を追加
+4. 「APIとサービス → 認証情報 → 認証情報を作成 → OAuthクライアントID」
+   - アプリケーションの種類：**ウェブアプリケーション**
+   - 承認済みのリダイレクトURI：`{APP_URL}/api/google/callback`
+     （例：`http://localhost:3000/api/google/callback`、本番なら `https://yaku.example.com/api/google/callback`）
+5. 発行されたクライアントIDとシークレットを `.env` に設定
+
+```bash
+APP_URL=https://yoyaku.example.com   # アプリの公開URL（末尾スラッシュなし）
+GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxx
+```
+
+6. アプリを再起動すると、各ユーザーの「マイ予約」画面に「Googleカレンダーと連携する」ボタンが表示されます
+
+連携の仕様:
+
+- 予約作成 → 予約者のGoogleカレンダー（メインカレンダー）に「【予約】設備名」のイベントを自動登録
+- 予約取消（管理者による取消を含む）→ 予約者のカレンダーからイベントを自動削除
+- カレンダー登録に失敗しても予約自体は成立します（ベストエフォート）
+- 連携解除は「マイ予約」画面からいつでも可能（Google側のアカウント設定からも取り消せます）
 
 ## 設定の変更
 

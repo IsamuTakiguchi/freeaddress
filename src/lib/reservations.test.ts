@@ -86,7 +86,11 @@ function createTestDb() {
       name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
       is_admin INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      google_email TEXT,
+      google_refresh_token TEXT,
+      google_access_token TEXT,
+      google_token_expires_at INTEGER
     );
     CREATE TABLE resources (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,6 +108,7 @@ function createTestDb() {
       start_time TEXT NOT NULL,
       end_time TEXT NOT NULL,
       purpose TEXT,
+      google_event_id TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);

@@ -127,11 +127,40 @@ export async function deleteUser(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id) || id === admin.id) return;
+
+  // 削除前に、Googleカレンダーに登録済みのイベントを控えておく
+  const target = db.select().from(users).where(eq(users.id, id)).get();
+  const syncedEventIds = db
+    .select({ googleEventId: reservations.googleEventId })
+    .from(reservations)
+    .where(eq(reservations.userId, id))
+    .all()
+    .map((r) => r.googleEventId)
+    .filter((e): e is string => !!e);
+
   // 予約が残っているユーザーは予約ごと削除する
   db.transaction((tx) => {
     tx.delete(reservations).where(eq(reservations.userId, id)).run();
     tx.delete(users).where(eq(users.id, id)).run();
   });
+
+  // 本人のGoogleカレンダーからもベストエフォートで削除
+  if (target?.googleRefreshToken && syncedEventIds.length > 0) {
+    try {
+      const { getAccessTokenForUser, deleteCalendarEvent } = await import(
+        "@/lib/google"
+      );
+      const accessToken = await getAccessTokenForUser(target);
+      if (accessToken) {
+        for (const eventId of syncedEventIds) {
+          await deleteCalendarEvent(accessToken, eventId);
+        }
+      }
+    } catch (e) {
+      console.error("Googleカレンダーからの削除に失敗:", e);
+    }
+  }
+
   revalidatePath("/admin/users");
   revalidatePath("/grid");
 }

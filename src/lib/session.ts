@@ -7,6 +7,7 @@ import { users, type User } from "@/db/schema";
 
 export interface SessionData {
   userId?: number;
+  oauthState?: string; // Google OAuth の CSRF 対策用 state
 }
 
 const sessionOptions: SessionOptions = {

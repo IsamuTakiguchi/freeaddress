@@ -15,6 +15,11 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+  // Googleカレンダー連携（未連携なら null）
+  googleEmail: text("google_email"),
+  googleRefreshToken: text("google_refresh_token"),
+  googleAccessToken: text("google_access_token"),
+  googleTokenExpiresAt: integer("google_token_expires_at"), // epoch ms
 });
 
 export const resources = sqliteTable("resources", {
@@ -40,6 +45,7 @@ export const reservations = sqliteTable(
     startTime: text("start_time").notNull(), // "HH:MM" 30分境界
     endTime: text("end_time").notNull(), // "HH:MM" 30分境界, start < end
     purpose: text("purpose"),
+    googleEventId: text("google_event_id"), // 予約者のGoogleカレンダーに作成したイベントID
     createdAt: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
