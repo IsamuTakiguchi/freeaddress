@@ -58,6 +58,41 @@ npm run dev                 # http://localhost:3000
 
 **運用開始前に必ず初期パスワードを変更（ユーザーを作り直し）してください。**
 
+## Railwayへのデプロイ（サーバー役PC不要・推奨）
+
+[Railway](https://railway.com/) にデプロイすると、事務所のパソコンを起動し続ける必要がなくなり、スマホや外出先からも利用できます。設定ファイル（`railway.json`）と起動スクリプトは同梱済みで、**コード変更は不要**です。
+
+### 手順（すべてRailwayの画面操作）
+
+1. **サービス作成** — Railwayダッシュボード → `New Project` → `Deploy from GitHub repo` → このリポジトリ（`freeaddress`）を選択
+   - 初回はGitHub連携の許可画面が出るので、リポジトリへのアクセスを許可
+   - デプロイするブランチを確認（Settings → Source → Branch）
+2. **ボリューム追加（重要）** — 作成されたサービスを右クリック（または `⌘K`/`Ctrl+K`）→ `Attach Volume`
+   - **Mount Path に `/data` を指定**。これが予約データの保存場所になります（ボリュームがないと再デプロイのたびにデータが消えます）
+3. **環境変数の設定** — サービスの `Variables` タブで以下を追加
+
+   | 変数名 | 値 |
+   |---|---|
+   | `DATABASE_PATH` | `/data/app.db` |
+   | `SESSION_SECRET` | 32文字以上のランダム文字列（Variables画面の生成機能や https://it-tools.tech/token-generator 等で生成） |
+   | `SEED_ADMIN_EMAIL` | 最初に作られる管理者のメールアドレス |
+   | `SEED_ADMIN_PASSWORD` | 管理者の初期パスワード |
+
+4. **公開URLの発行** — `Settings` → `Networking` → `Generate Domain`
+   - `https://xxxx.up.railway.app` のようなURLが発行されます。これが全員のアクセス先です
+5. デプロイ完了後、発行されたURLを開き、`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` でログイン → 管理画面から従業員のアカウントを登録
+
+### Googleカレンダー連携を使う場合
+
+環境変数に `APP_URL`（発行されたURL。例 `https://xxxx.up.railway.app`）、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET` を追加し、Google Cloud Console側のリダイレクトURIを `https://xxxx.up.railway.app/api/google/callback` に設定してください。
+
+### 運用メモ
+
+- 初回起動時にデータベース作成と初期データ投入が自動で行われます（`scripts/railway-start.mjs`）
+- GitHubのデプロイ対象ブランチにプッシュすると自動で再デプロイされます。データはボリュームにあるため消えません
+- バックアップはRailwayのボリュームバックアップ機能（Volume → Backups）が利用できます
+- 費用の目安：この規模のアプリなら月数ドル程度（Railwayの従量課金）。`Settings` → `App Sleeping` を有効にするとアクセスがない時間帯は停止してさらに安くなります（次のアクセス時に数秒の起動待ちが発生）
+
 ## 本番デプロイ（VPS・社内サーバー）
 
 ```bash
