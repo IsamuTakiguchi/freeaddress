@@ -1,0 +1,8 @@
+# Railway (Nixpacks) ビルド設定
+# better-sqlite3 のネイティブビルドに備えて Python とコンパイラを追加する。
+# "..." はデフォルトのパッケージ（Node.js 等）を維持したまま追加する指定。
+[phases.setup]
+nixPkgs = ["...", "python3", "gcc", "gnumake"]
+
+[variables]
+NIXPACKS_NODE_VERSION = "22"
